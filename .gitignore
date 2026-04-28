@@ -1,0 +1,17 @@
+# Секреты — НИКОГДА не коммитить
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.egg-info/
+
+# Виртуальное окружение
+.venv/
+venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
