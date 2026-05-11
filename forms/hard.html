@@ -1,0 +1,1446 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Ты сектант</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { overflow-x: hidden; }
+  body {
+    background: #0e0d0d;
+    color: #fefefe;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    min-height: 100vh;
+    line-height: 1.5;
+    font-size: 16px;
+    padding: 16px 14px 32px;
+  }
+
+  /* === Прогресс-бар === */
+  .progress-wrap {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: rgba(255,255,255,0.08);
+    z-index: 100;
+  }
+  .progress-bar {
+    height: 100%;
+    background: #c71617;
+    width: 0%;
+    transition: width 0.3s ease;
+  }
+
+  /* === Контейнер === */
+  .container {
+    max-width: 540px;
+    margin: 28px auto;
+    padding: 0;
+  }
+
+  .logo {
+    text-align: center;
+    margin-bottom: 30px;
+  }
+  .logo img {
+    max-width: 90px;
+    height: 90px;
+  }
+
+  /* === Экраны === */
+  .screen { display: none; }
+  .screen.active { display: block; animation: fadeIn 0.3s ease; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  h1 { font-size: 1.6em; margin-bottom: 16px; line-height: 1.2; font-weight: 700; }
+  h2 { font-size: 1.3em; margin-bottom: 14px; line-height: 1.25; font-weight: 600; }
+  h3 { font-size: 1.1em; margin-bottom: 12px; line-height: 1.3; margin-top: 18px; }
+  p  { margin-bottom: 14px; font-size: 1em; }
+
+  .screen img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    margin: 16px 0;
+    display: block;
+  }
+
+  .image-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin: 16px 0;
+  }
+  .image-grid figure { margin: 0; }
+  .image-grid img { margin: 0; }
+  .image-grid figcaption {
+    font-size: 0.9em;
+    color: #b1b1b1;
+    margin-top: 4px;
+    text-align: center;
+  }
+
+    /* === Слайдер фото === */
+  .photo-slider {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    gap: 8px;
+    margin: 14px 0 8px;
+    padding-bottom: 6px;
+    scrollbar-width: thin;
+    -webkit-overflow-scrolling: touch;
+  }
+  .photo-slider img {
+    flex: 0 0 88%;
+    scroll-snap-align: center;
+    border-radius: 8px;
+    margin: 0;
+    height: auto;
+    object-fit: cover;
+    max-height: 60vh;
+  }
+  .photo-slider::-webkit-scrollbar { height: 4px; }
+  .photo-slider::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 2px; }
+  .photo-slider::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
+
+  /* Метка-подсказка про свайп */
+  .swipe-hint {
+    font-size: 0.85em;
+    color: #b1b1b1;
+    text-align: center;
+    margin: -2px 0 12px;
+    user-select: none;
+  }
+  /* === Кнопки === */
+  .btn {
+    display: inline-block;
+    background: #c71617;
+    color: #fefefe;
+    width: 100%;
+    border: none;
+    padding: 16px 20px;
+    font-size: 1.05em;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.15s, opacity 0.15s
+  }
+  .btn:active { background: #a01112; }
+  .btn:disabled { background: #45433e; opacity: 0.6; cursor: not-allowed; }
+
+  .btn-back {
+    position: fixed;
+    top: 12px;
+    left: 12px;
+    background: rgba(0,0,0,0.6);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: #fefefe;
+    padding: 8px 12px;
+    font-size: 0.85em;
+    border-radius: 6px;
+    cursor: pointer;
+    z-index: 99;
+    width: auto;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+  .btn-back:hover { background: rgba(255,255,255,0.05); }
+
+  /* === Звёзды (рейтинг) === */
+  .stars {
+    display: flex;
+    gap: 6px;
+    margin: 18px 0;
+    justify-content: space-between;
+  }
+  .star {
+    flex: 1;
+    aspect-ratio: 1;
+    cursor: pointer;
+    color: #45433e;
+    transition: color 0.15s, transform 0.1s;
+    font-size: 38px;
+    line-height: 1;
+    user-select: none;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .star:active { transform: scale(0.92); }
+  .star.filled { color: #ffd12e; }
+
+  /* === NPS шкала === */
+  .nps-scale {
+    display: grid;
+    grid-template-columns: repeat(11, 1fr);
+    gap: 4px;
+    margin: 18px 0 6px;
+  }
+  .nps-num {
+    height: 42px;
+    border: 1px solid rgba(255,255,255,0.2);
+    background: transparent;
+    color: #fefefe;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: all 0.15s;
+    padding: 0;
+    font-family: inherit;
+  }
+  .nps-num.selected { background: #c71617; border-color: #c71617; font-weight: 600; }
+  .nps-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85em;
+    color: #b1b1b1;
+    margin-top: 8px;
+  }
+
+  /* === Чекбоксы и radio === */
+  .options { margin: 20px 0; }
+  .option {
+    display: flex;
+    align-items: flex-start;
+    padding: 14px 16px;
+    margin-bottom: 8px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .option:hover { background: rgba(255,255,255,0.06); }
+  .option.selected {
+    background: rgba(199,22,23,0.15);
+    border-color: #c71617;
+  }
+  .option input { display: none; }
+  .option-text { flex: 1; }
+
+  /* === Textarea и input === */
+  textarea, input[type="text"] {
+    width: 100%;
+    padding: 12px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 8px;
+    color: #fefefe;
+    font-size: 1em;
+    font-family: inherit;
+    resize: vertical;
+  }
+  textarea { min-height: 100px; }
+  textarea:focus, input[type="text"]:focus {
+    outline: none;
+    border-color: #c71617;
+  }
+  textarea::placeholder, input::placeholder { color: #605f5f; }
+
+  /* === Диалог Михал Палыча === */
+.mihal-dialog {
+  background: rgba(255,255,255,0.03);
+  border-radius: 10px;
+  padding: 14px;
+  margin: 14px 0;
+  border: 1px solid rgba(255,255,255,0.08);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 12px;
+}
+.mihal-line {
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: rgba(255,255,255,0.03);
+  font-size: 0.92em;
+  line-height: 1.4;
+  border-left: 3px solid;
+}
+.mihal-line.you {
+  border-left-color: #7EB2FF;
+  grid-column: 1;
+}
+.mihal-line.mp {
+  border-left-color: #c71617;
+  grid-column: 2;
+}
+.mihal-line strong {
+  display: block;
+  font-size: 0.72em;
+  margin-bottom: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  opacity: 0.7;
+}
+.mihal-line.you strong { color: #7EB2FF; }
+.mihal-line.mp  strong { color: #FF7373; }
+
+/* На очень узких экранах — в одну колонку */
+@media (max-width: 380px) {
+  .mihal-dialog { grid-template-columns: 1fr; }
+  .mihal-line.you, .mihal-line.mp { grid-column: 1; }
+}
+  /* === Матрица === */
+  .matrix {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 0.95em;
+  }
+  .matrix th, .matrix td {
+    padding: 10px 4px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .matrix th:first-child, .matrix td:first-child {
+    text-align: left;
+    font-weight: 500;
+  }
+  .matrix-radio {
+    width: 24px; height: 24px;
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 50%;
+    cursor: pointer;
+    display: inline-block;
+    transition: all 0.2s;
+  }
+  .matrix-radio.selected {
+    background: #c71617;
+    border-color: #c71617;
+  }
+
+  /* === Подсказки и лейблы === */
+  .hint {
+    color: #b1b1b1;
+    font-size: 0.9em;
+    margin: 8px 0 16px;
+  }
+  .required {
+    color: #c71617;
+    margin-left: 4px;
+  }
+
+  /* === Финальный экран === */
+  .final-stat {
+    background: rgba(255,255,255,0.03);
+    border-left: 3px solid #c71617;
+    padding: 16px;
+    margin: 12px 0;
+  }
+  .final-stat strong { color: #c71617; }
+
+  /* === Ссылки === */
+  a { color: #c71617; }
+
+  /* === Mobile === */
+  @media (min-width: 600px) {
+    body { padding: 24px 20px 40px; }
+    .container { margin-top: 32px; }
+    h1 { font-size: 1.85em; }
+    h2 { font-size: 1.5em; }
+    .logo img { width: 110px; height: 110px; }
+  }
+
+  /* === Утилиты === */
+  .hidden { display: none !important; }
+  .text-muted { color: #b1b1b1; }
+  .center { text-align: center; }
+</style>
+</head>
+<body>
+
+<div class="progress-wrap">
+  <div class="progress-bar" id="progress"></div>
+</div>
+
+<button class="btn-back hidden" id="btn-back" onclick="goBack()">← Назад</button>
+
+<div class="container">
+
+  <div class="logo">
+    <img src="https://static.tildacdn.com/tild6133-6230-4533-b064-393933636532/__.png" alt="SECTA">
+  </div>
+
+  <!-- ============================================================
+       ЭКРАН 1 — Стартовый
+       ============================================================ -->
+  <div class="screen active" data-screen="1">
+    <h1>Ты сектант, <span class="f-name">друг</span></h1>
+    <img src="https://static.tildacdn.com/tild3534-3332-4031-b939-643831363230/maxresdefault.jpg" alt="Хагрид">
+    <p>
+      <span class="f-name">Друг</span>, ну куда же так смело нажимаешь на принять политику конфиденциальности, хоть прочитал бы..
+      Ну ладно раз согласился, теперь ждем тебя каждое полнолуние в секте будем барана в жертву приносить и пить кровь девственниц.
+    </p>
+    <h3>Согласен?<span class="required">*</span></h3>
+    <div class="options" data-single-id="agree">
+      <label class="option"><input type="radio" name="agree" value="Да"><span class="option-text">Да</span></label>
+      <label class="option"><input type="radio" name="agree" value="Нет"><span class="option-text">Нет</span></label>
+    </div>
+      <!-- Раскрывается при "Нет" -->
+     <div id="agree-no" class="hidden">
+    <p style="font-weight:500;font-size: 40px;">Пидора ответ :(</p>
+     </div>
+  <!-- Раскрывается при "Да" -->
+    <div id="agree-yes" class="hidden">
+      <p>
+        Ладно, шутки шутками, но тут мы по делу.<br>
+        Ты знал что барбершопу Secta уже 5 лет?!<br>
+        К этому событию мы подготовили небольшой интерактив!<br>
+        Мы расскажем чуть-чуть про эти 5 лет и узнаем твои впечатления о нас.<br>
+        Готов?
+      </p>
+    <button class="btn" onclick="next()">Расскажи про свой опыт у нас</button>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       ЭКРАН 2 — Факт про 4891 клиентов
+       ============================================================ -->
+  <div class="screen" data-screen="2">
+    <p><strong>За 5 лет через кресла SECTA прошло 4891 уникальных клиентов.</strong></p>
+    <p>А если посчитать все визиты, то выйдет около 40 тысяч голов</p>
+    <p>Это чуть больще чем кол-во несовершеннолетних детей завезенных на отсров Эпштейна. Каждый из них доверил нам свою голову. В прямом смысле.</p>
+    <p>Ты — один из них, мы за это благодарны!<br>
+    Ты у нас был <strong class="f-visits">N</strong> раз за это время, не плохо!</p>
+    <img src="https://static.tildacdn.com/tild3161-3565-4938-b732-633336323934/EG3A6031.jpg" alt="Гоги стрижет">
+    <button class="btn" onclick="next()">Сюда жми</button>
+  </div>
+
+  <!-- ============================================================
+       ЭКРАН 3 — Оценка мастера (стрижка)
+       ============================================================ -->
+  <div class="screen" data-screen="3">
+    <h2>Как сегодня/в последний раз отработал <span class="f-master">мастер</span>?<span class="required">*</span></h2>
+    <div class="stars" data-rating-id="master_work"></div>
+    
+
+    <!-- Logic jump: rating <= 3 -->
+    <div id="master-bad" class="hidden" style="margin-top:30px;">
+      <h3>Стоп. Что не так-то?<span class="required">*</span></h3>
+      <div class="options" data-multi-id="master_bad_reasons">
+        <label class="option"><input type="checkbox" value="Длина не та"><span class="option-text">Длина не та</span></label>
+        <label class="option"><input type="checkbox" value="Форма не та"><span class="option-text">Форма не та</span></label>
+        <label class="option"><input type="checkbox" value="Аккуратность подвела"><span class="option-text">Аккуратность подвела</span></label>
+        <label class="option"><input type="checkbox" value="Торопились"><span class="option-text">Торопились</span></label>
+        <label class="option"><input type="checkbox" value="Всё не то, всё не так"><span class="option-text">Всё не то, всё не так</span></label>
+        <label class="option"><input type="checkbox" value="Шучу, всё ок"><span class="option-text">Да ладно, шучу! Все ок)</span></label>
+        <div id="master-bad-troll" class="hidden">
+          <p>Смешно тебе?</p>
+          <img src="https://static.tildacdn.com/tild3136-3865-4936-a364-306137636536/photo_2026-04-27_22-.jpg" alt="Гоги-клоун" style="max-width: 40%;">
+        </div>
+          <label class="option" data-other="service_bad_other"><input type="checkbox" value="other"><span class="option-text">Другое</span></label>
+        </div>
+        <div class="other-input-wrap hidden" data-other-input="service_bad_other">
+          <input type="text" placeholder="Уточните" style="margin-bottom: 14px;">
+        </div>
+    </div>
+    <img src="https://static.tildacdn.com/tild3861-3130-4333-b334-356362383238/EG3A5644.jpg" alt="Мастера">
+    <button class="btn" onclick="next()" id="btn-screen-3" disabled>Интересно конечно, ладно</button>
+  </div>
+
+  <!-- ============================================================
+       ЭКРАН 4 — Оценка мастера (как человек)
+       ============================================================ -->
+  <div class="screen" data-screen="4">
+    <h2>А если пройтись по мастеру,<br>не стрижка, а человек?<span class="required">*</span></h2>
+    <div class="stars" data-rating-id="master_human"></div>
+
+    <div id="master-human-feedback" class="hidden" style="margin-top:18px;">
+      <h3 id="master-human-text"></h3>
+    </div>
+
+    <!-- Ветка ≤3 -->
+    <div id="master-human-bad" class="hidden" style="margin-top:20px;">
+      <h3>Что именно не так?<span class="required">*</span></h3>
+      <div class="options" data-multi-id="master_human_bad">
+        <label class="option"><input type="checkbox" value="Аккуратность в работе"><span class="option-text">Аккуратность в работе</span></label>
+        <label class="option"><input type="checkbox" value="Опрятность"><span class="option-text">Опрятность (внешний вид)</span></label>
+        <label class="option"><input type="checkbox" value="Внимание к деталям"><span class="option-text">Внимание к деталям</span></label>
+        <label class="option"><input type="checkbox" value="Некомпетентность"><span class="option-text">Некомпетентность</span></label>
+        <label class="option" data-other="master_human_bad_other"><input type="checkbox" value="other"><span class="option-text">Другое</span></label>
+      </div>
+      <div class="other-input-wrap hidden" data-other-input="master_human_bad_other">
+        <input type="text" placeholder="Уточни">
+      </div>
+    </div>
+    <img id="master-img" src="" alt="" class="hidden">
+    <button class="btn" onclick="next()" id="btn-screen-4" disabled>Ну ка, что же дальше?</button>
+  </div>
+
+  <!-- ============================================================
+       ЭКРАН 5 — 17 мастеров за 5 лет
+       ============================================================ -->
+  <div class="screen" data-screen="5">
+    <h2>За 5 лет у нас работало 17 мастеров.</h2>
+    <p>Кто-то ушёл покорять Москву. Кто-то Балахну...<br>
+    Один, по слухам, стрижёт овец в Армении.</p>
+    <p>Но те, кто остался — остались не просто так.(у нас их паспорта хахха)</p>
+    <img src="https://static.tildacdn.com/tild3562-3463-4131-b931-656663393133/photo_2026-04-18_15-.jpg" alt="Мастера">
+    <button class="btn" onclick="next()">Ехала!</button>
+  </div>
+
+<!-- ============================================================
+     ЭКРАН 6 — Мы не стоим на месте
+     ============================================================ -->
+<div class="screen" data-screen="6">
+  <h2>Мы не стоим на месте.</h2>
+  <p>Наши мастера ежегодно проходят обучения по повышению квалификации, чтобы делать Ваш образ все лучше и лучше.</p>
+  <p>Вот пару забавных фото с них:</p>
+
+  <div class="image-grid">
+    <img src="https://static.tildacdn.com/tild3264-6630-4536-a334-306566343166/photo_2026-01-13_18-.jpg" alt="">
+    <img src="https://static.tildacdn.com/tild6134-6338-4537-b031-396530373965/photo_2026-05-06_13-.jpg" alt="">
+    <img src="https://static.tildacdn.com/tild3732-6337-4634-b664-336635613465/IMG_0307.JPG" alt="">
+    <img src="https://static.tildacdn.com/tild3132-6239-4236-b361-626163623265/IMG_2471.JPG" alt="">
+  </div>
+
+  <button class="btn" onclick="next()">Ехала!</button>
+</div>
+  <!-- ============================================================
+       ЭКРАН 7 — Зона ожидания (4 фото)
+       ============================================================ -->
+  <div class="screen" data-screen="7">
+    <h2>Зона ожидания у нас тоже менялась!</h2>
+    <div class="image-grid">
+      <figure>
+        <img src="https://static.tildacdn.com/tild3463-3363-4362-b361-626132646436/photo_2026-04-19_12-.jpg" alt="2021">
+        <figcaption>2021 год, 1 день секты</figcaption>
+      </figure>
+      <figure>
+        <img src="https://static.tildacdn.com/tild6431-6437-4166-a134-333061663730/photo_2026-04-19_12-.jpg" alt="2022">
+        <figcaption>2022 год</figcaption>
+      </figure>
+      <figure>
+        <img src="https://static.tildacdn.com/tild6132-6135-4633-b738-326434393736/photo_2026-04-19_12-.jpg" alt="2024">
+        <figcaption>2024 год</figcaption>
+      </figure>
+      <figure>
+        <img src="https://static.tildacdn.com/tild3936-6230-4762-b238-643861353261/IMG_1737.jpg" alt="2026">
+        <figcaption>2026 год</figcaption>
+      </figure>
+    </div>
+    <p>Каждый год меняли что-то для тебя — телевизор, приставку, игры.</p>
+    <button class="btn" onclick="next()">Все еще едем!</button>
+  </div>
+
+  <!-- ============================================================
+       ЭКРАН 8 — Сотни фильмов + ожидание
+       ============================================================ -->
+  <div class="screen" data-screen="8">
+    <h1>Включались сотни фильмов, сериалов и мультфильмов!</h1>
+    <p>Вот топ самых ебаных фильмов, показываемых на телевизоре, по мнению Мастеров:<br>
+    1. Человек-муравей<br>
+    2. Тор<br>
+    3. Капитан Америка<br>
+    4. Спанч Боб<br>
+    5. Мстители</p>
+
+    <h3>А ты в последний раз долго ждал?<span class="required">*</span></h3>
+    <div class="options" data-single-id="waited">
+      <label class="option"><input type="radio" name="waited" value="Раньше начали"><span class="option-text">Начали даже раньше</span></label>
+      <label class="option"><input type="radio" name="waited" value="Минута в минуту"><span class="option-text">Минута в минуту</span></label>
+      <label class="option"><input type="radio" name="waited" value="До 10 мин"><span class="option-text">Подождал чуть-чуть (до 10 мин)</span></label>
+      <label class="option"><input type="radio" name="waited" value="Больше 10 мин"><span class="option-text">Вечность..(больше 10 мин)</span></label>
+      <label class="option"><input type="radio" name="waited" value="Сам опоздал"><span class="option-text">Да я сам опоздал блин</span></label>
+    </div>
+
+    <!-- Logic jump: больше 10 мин -->
+    <div id="warned-block" class="hidden">
+      <h3>Предупредили хоть?<span class="required">*</span></h3>
+      <div class="options" data-single-id="warned">
+        <label class="option"><input type="radio" name="warned" value="Да"><span class="option-text">Да</span></label>
+        <label class="option"><input type="radio" name="warned" value="Нет"><span class="option-text">Нет</span></label>
+      </div>
+      <div id="warned-no" class="hidden">
+        <p style="font-weight:500;margin-top:20px;">Пидора ответ :(</p>
+      </div>
+    </div>
+
+    <button class="btn" onclick="next()" id="btn-screen-8" disabled>*ТЫК*</button>
+  </div>
+
+  <!-- ============================================================
+       ЭКРАН 9 — Атмосфера
+       ============================================================ -->
+  <div class="screen" data-screen="9">
+    <h1>Вот уже пять лет мы угощаем тебя различными напитками.</h1>
+    <p>Ты например знал, что за все время было выпито около 5000л жидкостей, это как раз объем говновозки)</p>
+
+    <h3>Как тебе атмосфера у нас?<span class="required">*</span></h3>
+    <div class="stars" data-rating-id="atmosphere"></div>
+
+    <img src="https://static.tildacdn.com/tild6231-6636-4738-b161-333139633161/photo_2026-04-19_14-.jpg" alt="Атмосфера">
+
+    <button class="btn" onclick="next()" id="btn-screen-9" disabled>Благодарим, проходите дальше!</button>
+  </div>
+
+  <!-- ============================================================
+       ЭКРАН 10 — Матрица оценок
+       ============================================================ -->
+  <div class="screen" data-screen="10">
+    <h2>Минутка серьезности! </h2>
+    <h2>Нам важно именно твое мнение - постоянного клиента, расставь оценки и напиши что нам поправить/улучшить для нашего роста.<span class="required">*</span></h2>
+    <table class="matrix">
+      <thead>
+        <tr><th></th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th></tr>
+      </thead>
+      <tbody>
+        <tr data-row="cleanness"><td>Чистота</td>
+          <td><span class="matrix-radio"></span></td><td><span class="matrix-radio"></span></td>
+          <td><span class="matrix-radio"></span></td><td><span class="matrix-radio"></span></td>
+          <td><span class="matrix-radio"></span></td>
+        </tr>
+        <tr data-row="music"><td>Музыка</td>
+          <td><span class="matrix-radio"></span></td><td><span class="matrix-radio"></span></td>
+          <td><span class="matrix-radio"></span></td><td><span class="matrix-radio"></span></td>
+          <td><span class="matrix-radio"></span></td>
+        </tr>
+        <tr data-row="smell"><td>Запах</td>
+          <td><span class="matrix-radio"></span></td><td><span class="matrix-radio"></span></td>
+          <td><span class="matrix-radio"></span></td><td><span class="matrix-radio"></span></td>
+          <td><span class="matrix-radio"></span></td>
+        </tr>
+        <tr data-row="comfort"><td>Удобство</td>
+          <td><span class="matrix-radio"></span></td><td><span class="matrix-radio"></span></td>
+          <td><span class="matrix-radio"></span></td><td><span class="matrix-radio"></span></td>
+          <td><span class="matrix-radio"></span></td>
+        </tr>
+        <tr data-row="coffee"><td>Кофе/напитки</td>
+          <td><span class="matrix-radio"></span></td><td><span class="matrix-radio"></span></td>
+          <td><span class="matrix-radio"></span></td><td><span class="matrix-radio"></span></td>
+          <td><span class="matrix-radio"></span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>Будь добр заполни честно.<span class="required">*</span></h3>
+    <textarea id="improve" placeholder="От этого ответа зависит твоя жизнь." oninput="checkMatrixScreen()" style="margin-bottom: 12px;"></textarea>
+
+    <button class="btn" onclick="next()" id="btn-screen-10" disabled>А теперь дальше хихикать - *тык*</button>
+  </div>
+    <!-- ============================================================
+       ЭКРАН 11 — фотозона
+       ============================================================ -->
+  <div class="screen" data-screen="11">
+    <h2>Знаете ли вы что?</h2>
+    <p>В нашем барбершопе есть фотозона.</p>
+    <p>После стрижки можем провести фотосессию в стиле ню в новом образе.</p>
+    
+    <img src="https://static.tildacdn.com/tild3938-3832-4466-b435-636637366234/DSC_7012_1024x1024.webp" alt="">
+    <button class="btn" onclick="next()">Ну тут я пофоткаюсь</button>
+  </div>
+
+
+  <!-- ============================================================
+       ЭКРАН 12 — Цены
+       ============================================================ -->
+  <div class="screen" data-screen="12">
+    <img src="https://static.tildacdn.com/tild3236-6266-4137-b835-383066643834/piggi1.jpg" alt="Саша с Пигги">
+    <h2>Че с деньгами?<span class="required">*</span></h2>
+    <div class="options" data-multi-id="money">
+      <label class="option"><input type="checkbox" value="Дешево"><span class="option-text">Дешево</span></label>
+      <div id="money-cheap" class="hidden">
+         <p style="font-weight:500;margin-top:10px;">А почему чай тогда не оставляем?</p>
+      </div>
+      <label class="option"><input type="checkbox" value="Справедливо"><span class="option-text">Справедливо, не жалко</span></label>
+      <label class="option"><input type="checkbox" value="Дороговато"><span class="option-text">Дороговато, но норм</span></label>
+      <label class="option"><input type="checkbox" value="Дорого"><span class="option-text">Дорого</span></label>
+      <div id="money-expensive" class="hidden">
+        <p style="font-weight:500;margin-top:10px;">Или может кто-то мало зарабатывает)))</p>
+      </div>
+      <label class="option"><input type="checkbox" value="Не знаю / не сравнивал"><span class="option-text">Не знаю / не сравнивал</span></label>
+      <label class="option" id="opt-no-money"><input type="checkbox" value="С какими деньгами"><span class="option-text">С какими деньгами?</span></label>
+      
+    </div>
+
+    <!-- Logic jump: выбрано "С какими деньгами" -->
+    <div id="mihal-palych" class="hidden">
+      <h3 style="margin-top:24px;">Михал Палыч — Мужик  </h3>
+      <div class="mihal-dialog" id="mihal-dialog"></div>
+    </div>
+    <img src="https://static.tildacdn.com/tild3138-6438-4232-b239-386164313733/piggi2.jpg" alt="Миша с Пигги">
+
+    <button class="btn" onclick="next()" id="btn-screen-12" disabled>Офигеть, что там еще?</button>
+  </div>
+
+  <!-- ============================================================
+      ЭКРАН 13 — Рубрика До - После (с слайдерами)
+      ============================================================ -->
+  <div class="screen" data-screen="13">
+    <h1>Рубрика До - После!</h1>
+
+    <!-- Группа 1 -->
+    <div class="photo-slider">
+      <img src="https://static.tildacdn.com/tild6433-6461-4533-b831-626366323430/IMG_4402.jpeg" alt="До 1">
+      <img src="https://static.tildacdn.com/tild6436-3537-4464-a566-313433383635/photo_2026-05-05_18-.jpg" alt="До 2">
+      <img src="https://static.tildacdn.com/tild3565-6461-4131-a538-396165363363/photo_2026-04-19_16-.jpg" alt="После">
+    </div>
+    <p class="swipe-hint">← свайп для следующего фото →</p>
+    <p>Да, ты правильно догадался, Гогян стрижет у параши)</p>
+
+    <!-- Группа 2 -->
+    <div class="photo-slider">
+      <img src="https://static.tildacdn.com/tild6664-3030-4339-b865-613234663364/photo_2026-05-05_18-.jpg" alt="До 1">
+      <img src="https://static.tildacdn.com/tild6266-3764-4262-b933-333365653335/photo_2026-05-05_18-.jpg" alt="До 2">
+      <img src="https://static.tildacdn.com/tild3863-6633-4935-a561-336662383339/photo_2026-05-05_19-.jpg" alt="После">
+    </div>
+    <p class="swipe-hint">← свайп для следующего фото →</p>
+    <p>У нас были большие сомнения поместятся ли 4 кресла в ряд.</p>
+
+    <!-- Группа 3 -->
+    <div class="photo-slider">
+      <img src="https://static.tildacdn.com/tild3466-3539-4338-a164-346465376139/photo_2026-05-05_18-.jpg" alt="До 1">
+      <img src="https://static.tildacdn.com/tild6536-3636-4337-b161-303963396132/photo_2026-05-05_18-.jpg" alt="До 2">
+      <img src="https://static.tildacdn.com/tild6566-6137-4063-b339-303863393034/photo_2026-05-05_19-.jpg" alt="После">
+    </div>
+    <p class="swipe-hint">← свайп для следующего фото →</p>
+    <p>Какие же уебищные цвета тут раньше были)</p>
+
+    <button class="btn" onclick="next()">Океееей, летс гоу</button>
+  </div>
+
+  <!-- ============================================================
+       ЭКРАН 14 — Новые услуги
+       ============================================================ -->
+  <div class="screen" data-screen="14">
+    <h1>Мы думаем вводить новые услуги.</h1>
+    <h3>Что из этого что зацепило бы?<span class="required">*</span></h3>
+    <div class="options" data-multi-id="new_services">
+      <label class="option"><input type="checkbox" value="Уход за волосами"><span class="option-text">Уход за волосами</span></label>
+      <label class="option"><input type="checkbox" value="Биозавивка"><span class="option-text">Биозавивка</span></label>
+      <label class="option"><input type="checkbox" value="Окрашивание"><span class="option-text">Окрашивание</span></label>
+      <label class="option"><input type="checkbox" value="Стрижка с окончанием"><span class="option-text">Стрижка с окончанием</span></label>
+      <label class="option"><input type="checkbox" value="Маникюр"><span class="option-text">Маникюр</span></label>
+      <label class="option"><input type="checkbox" value="Опасное бритьё"><span class="option-text">Опасное бритьё</span></label>
+      <label class="option"><input type="checkbox" value="Ничего"><span class="option-text">Ничего, мне и стрижки хватает</span></label>
+      <label class="option" data-other="new_services_other"><input type="checkbox" value="other"><span class="option-text">Другое</span></label>
+    </div>
+    <div class="other-input-wrap hidden" data-other-input="new_services_other">
+      <input type="text" placeholder="Что бы хотел?">
+    </div>
+    <img src="https://static.tildacdn.com/tild3664-3133-4838-b935-663664313436/photo_2026-04-19_17-.jpg" alt="Мастера">
+    <button class="btn" onclick="next()" id="btn-screen-14" disabled>А пахне як! *тык*</button>
+  </div>
+
+  <!-- ============================================================
+       ЭКРАН 15 — Мерч
+       ============================================================ -->
+  <div class="screen" data-screen="15">
+    <h2>За эти пять лет мы делали (а что-то нам дарили) несколько разных предметов гардероба. И уже можно выпускать мерч!</h2>
+    <p><strong>Ты уже скорее всего видел некоторые экземпляры.</strong></p>
+    <img src="https://static.tildacdn.com/tild3739-3431-4237-b366-373638343230/photo_2026-04-23_17-.jpg" alt="Худи">
+    <img src="https://static.tildacdn.com/tild6139-3139-4239-b764-633262363464/photo_2026-04-23_17-.jpg" alt="Кепки">
+    <img src="https://static.tildacdn.com/tild6230-6561-4662-b036-356539313539/photo_2026-04-23_17-.jpg" alt="Носки">
+
+    <h3>Хотел бы наш мерч?<span class="required">*</span></h3>
+    <div class="options" data-single-id="merch_want">
+      <label class="option"><input type="radio" name="merch_want" value="Да"><span class="option-text">Да, конечно!</span></label>
+      <label class="option"><input type="radio" name="merch_want" value="Нет"><span class="option-text">Нет</span></label>
+    </div>
+
+    <!-- Logic jump: Нет -->
+    <div id="merch-no" class="hidden">
+      <p>Пидора ответ :(</p>
+    </div>
+
+    <!-- Logic jump: Да → купил бы? -->
+    <div id="merch-buy" class="hidden">
+      <h3>Ух ты! Круто, а купил бы?<span class="required">*</span></h3>
+      <div class="options" data-single-id="merch_buy">
+        <label class="option"><input type="radio" name="merch_buy" value="Безусловно"><span class="option-text">Безусловно!</span></label>
+        <label class="option"><input type="radio" name="merch_buy" value="Платить нет"><span class="option-text">А, платить, тогда нет.</span></label>
+      </div>
+      <div id="merch-buy-yes" class="hidden">
+        <p>Блин, тогда задумаемся о каком нибудь интересном лимитированном выпуске.</p>
+      </div>
+      <div id="merch-buy-no" class="hidden">
+        <p>Пидора ответ :(</p>
+      </div>
+    </div>
+
+    <button class="btn" onclick="next()" id="btn-screen-15" disabled>Жми, ёкарный бабай!</button>
+  </div>
+
+
+<!-- ============================================================
+     ЭКРАН 16 — Оповещения
+     ============================================================ -->
+<div class="screen" data-screen="16">
+  <h2>Мы отправляем Вам уведомления в мессенджерах, дайте обратную связь по ним, пожалуйста.</h2>
+
+  <!-- Вопрос 1 -->
+  <h3>Удобны ли для вас наши уведомления?<span class="required">*</span></h3>
+  <div class="options" data-single-id="notif_convenient">
+    <label class="option"><input type="radio" name="notif_convenient" value="Да"><span class="option-text">Да</span></label>
+    <label class="option"><input type="radio" name="notif_convenient" value="Нет"><span class="option-text">Нет</span></label>
+  </div>
+  <div id="notif-convenient-no" class="hidden">
+    <p style="font-weight:500;margin-top:-4px;margin-bottom:10px;">Пидора ответ :(</p>
+  </div>
+
+  <!-- Вопрос 2 -->
+  <h3>Мешают ли уведомления от нас?<span class="required">*</span></h3>
+  <div class="options" data-single-id="notif_disturb">
+    <label class="option"><input type="radio" name="notif_disturb" value="Да"><span class="option-text">Да</span></label>
+    <label class="option"><input type="radio" name="notif_disturb" value="Нет"><span class="option-text">Нет</span></label>
+  </div>
+  <div id="notif-disturb-yes" class="hidden">
+    <input type="text" id="notif-disturb-which" placeholder="Какие именно?" style="margin-top:4px;margin-bottom:10px;">
+  </div>
+  <div id="notif-disturb-no" class="hidden">
+    <p style="font-weight:500;margin-top:-4px;margin-bottom:10px;">Пидора ответ :(</p>
+  </div>
+
+  <!-- Вопрос 3 -->
+  <h3>Полезны ли для вас уведомления для записи на повторный визит?<span class="required">*</span></h3>
+  <div class="options" data-single-id="notif_useful">
+    <label class="option"><input type="radio" name="notif_useful" value="Да"><span class="option-text">Да</span></label>
+    <label class="option"><input type="radio" name="notif_useful" value="Нет"><span class="option-text">Нет</span></label>
+  </div>
+  <div id="notif-useful-no" class="hidden">
+    <p style="font-weight:500;margin-top:-4px;margin-bottom:10px;">Пидора ответ :(</p>
+  </div>
+
+  <button class="btn" onclick="next()" id="btn-screen-16" disabled>Серенькая кнопочка нельзя *тык*, красная можно *тык*</button>
+</div>
+
+
+  <!-- ============================================================
+       ЭКРАН 17 — Что НЕ менять (textarea)
+       ============================================================ -->
+  <div class="screen" data-screen="17">
+    <h2><span class="f-name">Друг</span>, ты с нами уже <span class="f-years">N</span> — поэтому для тебя есть специальный вопрос.</h2>
+    <h3>Что у нас точно НЕ надо менять? Что должно остаться как есть?</h3>
+    <textarea id="dont-change" placeholder="Главное не меняйте Гогяна!"></textarea>
+    <img src="https://static.tildacdn.com/tild6136-3134-4832-b333-373438316339/EG3A7247.jpg" alt="Типы играют в плойку">
+    <button class="btn" onclick="next()">Да когда это уже закончится!</button>
+  </div>
+
+  <!-- ============================================================
+       ЭКРАН 18 — NPS + ветки
+       ============================================================ -->
+  <div class="screen" data-screen="18">
+    <h2>Последнее. Если друг спросит «где стричься?» — пошлёшь к нам?<span class="required">*</span></h2>
+    <div class="nps-scale" id="nps">
+      <button class="nps-num" data-val="0">0</button>
+      <button class="nps-num" data-val="1">1</button>
+      <button class="nps-num" data-val="2">2</button>
+      <button class="nps-num" data-val="3">3</button>
+      <button class="nps-num" data-val="4">4</button>
+      <button class="nps-num" data-val="5">5</button>
+      <button class="nps-num" data-val="6">6</button>
+      <button class="nps-num" data-val="7">7</button>
+      <button class="nps-num" data-val="8">8</button>
+      <button class="nps-num" data-val="9">9</button>
+      <button class="nps-num" data-val="10">10</button>
+    </div>
+    <div class="nps-labels">
+      <span>Точно нет</span>
+      <span>Однозначно</span>
+    </div>
+
+    <!-- NPS >= 9 -->
+    <div id="nps-promoter" class="hidden" style="margin-top:30px;">
+      <h2>Огонь. Раз дело такое — закинь короткий отзыв, нам это реально помогает.</h2>
+      <p>
+        2GIS: <a href="https://go.2gis.com/ThXrA" target="_blank">Оставить отзыв</a><br>
+        Яндекс карты: <a href="https://yandex.ru/maps/org/secta/87598059000/reviews" target="_blank">Оставить отзыв</a>
+      </p>
+      <p><strong style="font-size: 20px;">Кстати. Приводишь друга — вам обоим <strong style="color:#c71617;">20%</strong> скидки.</strong></p>
+    </div>
+
+    <!-- NPS 7–8 -->
+    <div id="nps-passive" class="hidden" style="margin-top:30px;">
+      <h3>7–8 — это «нормально, но не вау». Что добавить, чтобы стало 10?<span class="required">*</span></h3>
+      <textarea id="nps-improve-7-8" placeholder="Не хватило сочного минета"></textarea>
+    </div>
+
+    <!-- NPS < 7 -->
+    <div id="nps-detractor" class="hidden" style="margin-top:30px;">
+      <h3>Так. Что мы накосячили? Расскажи, разберёмся.<span class="required">*</span></h3>
+      <textarea id="nps-improve-low" placeholder="Вы все пидорасы бебебе"></textarea>
+    </div>
+
+
+    <div id="nps-idiot" class="hidden" style="margin-top:30px;">
+      <h3>НОЛЬ?! Ты что совсем еблан, нельзя 0 поставить</h3>
+      <textarea id="nps-improve-idiot" placeholder="И что ты тут хочешь написать, дурак блять!"></textarea>
+    </div>
+
+    <button class="btn" onclick="next()" id="btn-screen-18" disabled>Еще чуть-чуть потерпи!</button>
+  </div>
+
+  <!-- ============================================================
+       ЭКРАН 19 — Финал со статистикой
+       ============================================================ -->
+  <div class="screen" data-screen="19">
+    <h1>Время летит так быстро!</h1>
+    <h2>Мы собрали занимателные факты о Вас и секте за эти 5 лет!</h2>
+    <div class="final-stat">
+      За все время ты просидел в кресле <strong class="f-hours">N</strong> часов, за это время ты бы мог, ну сделать много полезного, а не просто просидеть в кресле...
+    </div>
+    <div class="final-stat">
+      За это время мы собрали с тебя <strong class="f-hair">N</strong> кг волос, теперь где то в Тае ходит транс с твоей шевелюрой)
+    </div>
+    <div class="final-stat">
+      Благодаря программе лояльности, ты сэкономил <strong class="f-money">N</strong> руб! Предлагаю их все отдать админам на чай)
+    </div>
+    <div class="final-stat">
+      В <strong style="color: #c71617; font-weight: 600;">2022</strong> году нас обокрали ночью со взломом. Ущерб был небольшой, но все же. А так же бесчисленное кол-во раз приходилось иметь дело с мошенниками, но это уже соввсем другая история... 
+    </div>
+    <div class="final-stat">
+      За пять лет мы сделали <strong style="color: #c71617; font-weight: 600;">2</strong> косметических ремонта, в первый раз из-за потопа, во в  торой просто делать нечего было.
+    </div>
+    <div class="final-stat">
+      Из-за постоянных поправок в законодательстве мы меняли вывеску <strong style="color: #c71617; font-weight: 600;">4</strong> раза! И кажется этому нет конца...
+    </div>
+    <button class="btn" onclick="submitForm()">Всё! КОНЕЦ</button>
+  </div>
+
+  <!-- ============================================================
+       ЭКРАН 20 — Спасибо
+       ============================================================ -->
+  <div class="screen" data-screen="20">
+    <h1>SECTA — 5 лет. И это только начало.</h1>
+    <p>Спасибо. Без шуток — ценим.</p>
+    <p>Бонус за честность промокод: <strong style="color:#c71617;">ОПРОС-ХУЕСОС</strong> на доп.услугу в подарок.<br>
+    Покажи администратору в следующий визит)</p>
+    <img src="https://static.tildacdn.com/tild3136-3034-4366-b865-383637616462/photo_2025-11-27_16-.jpg" alt="">
+  </div>
+
+</div>
+
+<script>
+// ====================================================================
+// СОСТОЯНИЕ
+// ====================================================================
+const TOTAL_SCREENS = 20;
+let currentScreen = 1;
+const history = [1];
+const answers = {};   // здесь будут все ответы пользователя
+const params = {};    // здесь — hidden fields из URL
+
+// ====================================================================
+// ИНИЦИАЛИЗАЦИЯ — читаем URL и подставляем @поля
+// ====================================================================
+function init() {
+  const url = new URLSearchParams(window.location.search);
+  ['name', 'master', 'visits', 'years', 'money_saved', 'hours', 'hair_kg', 'first_visit'].forEach(k => {
+    params[k] = url.get(k) || '';
+  });
+
+  // Подставляем в DOM
+  document.querySelectorAll('.f-name').forEach(el => el.textContent = params.name || 'друг');
+  document.querySelectorAll('.f-master').forEach(el => el.textContent = params.master || 'мастер');
+  document.querySelectorAll('.f-visits').forEach(el => el.textContent = params.visits || '?');
+  document.querySelectorAll('.f-years').forEach(el => el.textContent = params.years || 'давно');
+  document.querySelectorAll('.f-money').forEach(el => el.textContent = params.money_saved || '0');
+  document.querySelectorAll('.f-hours').forEach(el => el.textContent = params.hours || '0');
+  document.querySelectorAll('.f-hair').forEach(el => el.textContent = params.hair_kg || '0');
+
+  buildStars();
+  buildOptions();
+  buildMatrix();
+  buildNPS();
+  renderMihalDialog();
+  updateProgress();
+  // Картинка мастера на экране 4
+  const masterImg = document.getElementById('master-img');
+  if (params.master && MASTER_IMAGES[params.master]) {
+    masterImg.src = MASTER_IMAGES[params.master];
+    masterImg.classList.remove('hidden');
+  }
+}
+
+// ====================================================================
+// НАВИГАЦИЯ
+// ====================================================================
+function showScreen(n) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const target = document.querySelector(`[data-screen="${n}"]`);
+  if (target) target.classList.add('active');
+  currentScreen = n;
+  document.getElementById('btn-back').classList.toggle('hidden', n === 1 || n === TOTAL_SCREENS);
+  updateProgress();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function next() {
+  if (currentScreen >= TOTAL_SCREENS) return;
+  history.push(currentScreen + 1);
+  showScreen(currentScreen + 1);
+}
+
+function goBack() {
+  if (history.length <= 1) return;
+  history.pop();
+  showScreen(history[history.length - 1]);
+}
+
+function updateProgress() {
+  const pct = ((currentScreen - 1) / (TOTAL_SCREENS - 1)) * 100;
+  document.getElementById('progress').style.width = pct + '%';
+}
+
+const MASTER_IMAGES = {
+  'Михаил':  'https://static.tildacdn.com/tild3830-3334-4332-b531-316237656462/_.jpg',
+  'Денис':   'URL_ДЕНИСА',
+  'Саша Б.': 'https://static.tildacdn.com/tild3537-3732-4231-a333-316466356536/photo_2026-04-29_21-.jpg',
+  'Саша Г.': 'https://static.tildacdn.com/tild6438-6664-4333-a333-393064616439/photo_2026-01-13_15-.jpg',
+  'Вова':    'https://static.tildacdn.com/tild6166-3062-4766-b239-366264313737/photo_2025-08-25_21-.jpg'
+};
+// ====================================================================
+// ЗВЁЗДНЫЕ РЕЙТИНГИ
+// ====================================================================
+function buildStars() {
+  document.querySelectorAll('.stars').forEach(box => {
+    const id = box.dataset.ratingId;
+    for (let i = 1; i <= 5; i++) {
+      const star = document.createElement('span');
+      star.className = 'star';
+      star.textContent = '★';
+      star.dataset.val = i;
+      star.onclick = () => setRating(box, id, i);
+      star.onmouseover = () => hoverStars(box, i);
+      star.onmouseout = () => hoverStars(box, answers[id] || 0);
+      box.appendChild(star);
+    }
+  });
+}
+
+function hoverStars(box, n) {
+  box.querySelectorAll('.star').forEach((s, i) => {
+    s.classList.toggle('filled', i < n);
+  });
+}
+
+function setRating(box, id, val) {
+  answers[id] = val;
+  hoverStars(box, val);
+
+  // Logic jumps по рейтингам
+  if (id === 'master_work') {
+    document.getElementById('master-bad').classList.toggle('hidden', val > 3);
+    if (val >= 4) {
+      document.getElementById('btn-screen-3').disabled = false;
+    } else {
+      const bad = answers.master_bad_reasons || [];
+      document.getElementById('btn-screen-3').disabled = bad.length === 0;
+    }
+  }  
+  if (id === 'master_human') {
+    const texts = {
+      1: `Ну неужели ${params.master || 'мастер'} настолько гандон?`,
+      2: 'Не ну раз две звезды — лишаем его премии',
+      3: `Ну согласны, ${params.master || 'мастер'} нам тоже не нравится`,
+      4: 'Ну да, на большее он не тянет',
+      5: 'Пять звезд? Если он тебе угрожал только скажи'
+    };
+    document.getElementById('master-human-text').textContent = texts[val];
+    document.getElementById('master-human-feedback').classList.remove('hidden');
+    document.getElementById('master-human-bad').classList.toggle('hidden', val > 3);
+    if (val >= 4) {
+      document.getElementById('btn-screen-4').disabled = false;
+    } else {
+      const bad = answers.master_human_bad || [];
+      document.getElementById('btn-screen-4').disabled = bad.length === 0;
+    }
+  }
+  if (id === 'atmosphere') {
+    document.getElementById('btn-screen-9').disabled = false;
+  }
+}
+
+// ====================================================================
+// ОПЦИИ (single + multi)
+// ====================================================================
+function buildOptions() {
+  // Single (radio)
+  document.querySelectorAll('[data-single-id]').forEach(box => {
+    const id = box.dataset.singleId;
+    box.querySelectorAll('.option').forEach(opt => {
+      opt.onclick = (e) => {
+        if (e.target.tagName === 'INPUT' && e.target.type === 'text') return;
+        e.preventDefault();
+        box.querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
+        opt.classList.add('selected');
+        const val = opt.querySelector('input').value;
+        answers[id] = val;
+        opt.querySelector('input').checked = true;
+
+        // Скрываем все «Другое» в этой группе кроме текущего
+        box.querySelectorAll('.option').forEach(o => {
+          if (o.dataset.other) {
+            const w = document.querySelector(`[data-other-input="${o.dataset.other}"]`);
+            if (w && o !== opt) w.classList.add('hidden');
+          }
+        });
+        // Показываем выбранное «Другое»
+        const otherKey = opt.dataset.other;
+        if (otherKey) {
+          const wrap = document.querySelector(`[data-other-input="${otherKey}"]`);
+          if (wrap) wrap.classList.remove('hidden');
+        }
+
+        handleSingleLogic(id, val);
+      };
+    });
+  });
+
+  // Multi (checkbox)
+  document.querySelectorAll('[data-multi-id]').forEach(box => {
+    const id = box.dataset.multiId;
+    answers[id] = [];
+    box.querySelectorAll('.option').forEach(opt => {
+      opt.onclick = (e) => {
+        if (e.target.tagName === 'INPUT' && e.target.type === 'text') return;
+        e.preventDefault();
+        const inp = opt.querySelector('input');
+        inp.checked = !inp.checked;
+        opt.classList.toggle('selected', inp.checked);
+        const val = inp.value;
+        if (inp.checked) answers[id].push(val);
+        else answers[id] = answers[id].filter(v => v !== val);
+
+        // Поле «Другое»
+        const otherKey = opt.dataset.other;
+        if (otherKey) {
+          const wrap = document.querySelector(`[data-other-input="${otherKey}"]`);
+          if (wrap) wrap.classList.toggle('hidden', !inp.checked);
+        }
+
+        handleMultiLogic(id, answers[id]);
+      };
+    });
+  });
+}
+
+function handleSingleLogic(id, val) {
+  if (id === 'agree') {
+    document.getElementById('agree-yes').classList.toggle('hidden', val !== 'Да');
+    document.getElementById('agree-no').classList.toggle('hidden', val !== 'Нет');
+  }
+  if (id === 'waited') {
+    document.getElementById('warned-block').classList.toggle('hidden', val !== 'Больше 10 мин');
+    document.getElementById('btn-screen-8').disabled = (val === 'Больше 10 мин' && !answers.warned);
+    if (val !== 'Больше 10 мин') document.getElementById('btn-screen-8').disabled = false;
+  }
+  if (id === 'warned') {
+    document.getElementById('warned-no').classList.toggle('hidden', val !== 'Нет');
+    document.getElementById('btn-screen-8').disabled = false;
+  }
+  if (id === 'merch_want') {
+    document.getElementById('merch-no').classList.toggle('hidden', val !== 'Нет');
+    document.getElementById('merch-buy').classList.toggle('hidden', val !== 'Да');
+    document.getElementById('btn-screen-15').disabled = (val === 'Да');
+    if (val === 'Нет') document.getElementById('btn-screen-15').disabled = false;
+  }
+  if (id === 'merch_buy') {
+    document.getElementById('merch-buy-yes').classList.toggle('hidden', val !== 'Безусловно');
+    document.getElementById('merch-buy-no').classList.toggle('hidden', val !== 'Платить нет');
+    document.getElementById('btn-screen-15').disabled = false;
+  }
+  if (id === 'notif_convenient') {
+    document.getElementById('notif-convenient-no').classList.toggle('hidden', val !== 'Нет');
+    checkNotifScreen();
+  }
+  if (id === 'notif_disturb') {
+    document.getElementById('notif-disturb-yes').classList.toggle('hidden', val !== 'Да');
+    document.getElementById('notif-disturb-no').classList.toggle('hidden', val !== 'Нет');
+    checkNotifScreen();
+  }
+  if (id === 'notif_useful') {
+    document.getElementById('notif-useful-no').classList.toggle('hidden', val !== 'Нет');
+    checkNotifScreen();
+  }
+}
+
+function handleMultiLogic(id, vals) {
+  if (id === 'master_bad_reasons') {
+    const trolls = ['Шучу, всё ок'];
+    const showTroll = vals.some(v => trolls.includes(v));
+    document.getElementById('master-bad-troll').classList.toggle('hidden', !showTroll);
+    if (answers.master_work && answers.master_work <= 3) {
+      document.getElementById('btn-screen-3').disabled = vals.length === 0;
+    }
+  }
+  if (id === 'money') {
+    document.getElementById('mihal-palych').classList.toggle('hidden', !vals.includes('С какими деньгами'));
+    document.getElementById('money-cheap').classList.toggle('hidden', !vals.includes('Дешево'));
+    document.getElementById('money-expensive').classList.toggle('hidden', !vals.includes('Дорого'));
+    document.getElementById('btn-screen-12').disabled = vals.length === 0;
+  }
+  if (id === 'new_services') {
+    document.getElementById('btn-screen-14').disabled = vals.length === 0;
+  }
+  if (id === 'master_human_bad') {
+    document.getElementById('btn-screen-4').disabled = vals.length === 0;
+  }
+}
+
+function checkNotifScreen() {
+  const allAnswered = answers.notif_convenient && answers.notif_disturb && answers.notif_useful;
+  document.getElementById('btn-screen-16').disabled = !allAnswered;
+}
+// ====================================================================
+// МАТРИЦА (5 строк × 5 колонок)
+// ====================================================================
+function buildMatrix() {
+  answers.matrix = {};
+  document.querySelectorAll('.matrix tbody tr').forEach(row => {
+    const rowId = row.dataset.row;
+    row.querySelectorAll('.matrix-radio').forEach((cell, idx) => {
+      cell.onclick = () => {
+        row.querySelectorAll('.matrix-radio').forEach(c => c.classList.remove('selected'));
+        cell.classList.add('selected');
+        answers.matrix[rowId] = idx + 1;
+        checkMatrixScreen();
+      };
+    });
+  });
+}
+
+function checkMatrixScreen() {
+  const filled = Object.keys(answers.matrix || {}).length === 5;
+  const textFilled = document.getElementById('improve').value.trim().length > 0;
+  document.getElementById('btn-screen-10').disabled = !(filled && textFilled);
+}
+// ====================================================================
+// NPS
+// ====================================================================
+function buildNPS() {
+  document.querySelectorAll('.nps-num').forEach(btn => {
+    btn.onclick = () => {
+      document.querySelectorAll('.nps-num').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      const val = parseInt(btn.dataset.val, 10);
+      answers.nps = val;
+
+      document.getElementById('nps-promoter').classList.toggle('hidden', val < 9);
+      document.getElementById('nps-passive').classList.toggle('hidden', val < 7 || val > 8);
+      document.getElementById('nps-detractor').classList.toggle('hidden', val < 1 || val > 6);
+      document.getElementById('nps-idiot').classList.toggle('hidden', val > 0);
+
+      checkNpsScreen();
+    };
+  });
+
+  // При вводе в textarea — пересчитываем
+  ['nps-improve-7-8', 'nps-improve-low', 'nps-improve-idiot'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', checkNpsScreen);
+  });
+}
+
+function checkNpsScreen() {
+  const nps = answers.nps;
+  if (nps === undefined) {
+    document.getElementById('btn-screen-18').disabled = true;
+    return;
+  }
+  // 9-10 → кнопка активна сразу (нет обязательной textarea)
+  if (nps >= 9) {
+    document.getElementById('btn-screen-18').disabled = false;
+    return;
+  }
+  // 7-8 → нужна textarea nps-improve-7-8
+  if (nps >= 7) {
+    const t = document.getElementById('nps-improve-7-8').value.trim();
+    document.getElementById('btn-screen-18').disabled = t.length === 0;
+    return;
+  }
+  // 1-6 → нужна textarea nps-improve-low
+  if (nps >= 1) {
+    const t = document.getElementById('nps-improve-low').value.trim();
+    document.getElementById('btn-screen-18').disabled = t.length === 0;
+    return;
+  }
+  // 0 → нужна textarea nps-improve-idiot
+  const t = document.getElementById('nps-improve-idiot').value.trim();
+  document.getElementById('btn-screen-18').disabled = t.length === 0;
+}
+
+// ====================================================================
+// ДИАЛОГ МИХАЛ ПАЛЫЧА — все 108 реплик, две колонки
+// ====================================================================
+const MIHAL_DIALOG = [
+  ['mp', 'Че? Кому ты звонишь?'],
+  ['you', 'Тебе звоню.'],
+  ['mp', 'Кому?'],
+  ['you', 'Ну тебе'],
+  ['mp', 'Кому тебе?'],
+  ['you', 'Ну вот тебе вот'],
+  ['mp', 'Ты кто такой?'],
+  ['you', 'Михал Палыч'],
+  ['mp', 'Какой Михал Палыч?'],
+  ['you', 'Терентьев'],
+  ['mp', 'Такого не знаю, ты ошибся номером, друг'],
+  ['you', 'Кто?'],
+  ['mp', 'Ты'],
+  ['you', 'Че с деньгами?'],
+  ['mp', 'С какими деньгами?'],
+  ['you', 'Ну которые я внес в капитал'],
+  ['mp', 'Куда?'],
+  ['you', 'В капитал прожит... Прожиточного минимума.'],
+  ['mp', 'Ты пьяный или кто, сынок?'],
+  ['you', 'Я тре.. Я Михал Палыч Терентьев.'],
+  ['mp', 'Кто такой?'],
+  ['you', 'Пьяный.'],
+  ['mp', 'Вот именно, ну и все, завяжи лямку, ёбаный в рот.'],
+  ['you', 'Куда... Чё завязать?'],
+  ['mp', 'Завяжи лямку!'],
+  ['you', 'А чё ты кричишь?'],
+  ['mp', 'Да ничего!'],
+  ['you', '...'],
+  ['mp', '...'],
+  ['you', 'Алё!'],
+  ['mp', 'Да.'],
+  ['you', 'Ну чё там?'],
+  ['mp', 'Чего?!'],
+  ['you', 'Как с деньгами обстоят во... Обстоит вопрос?'],
+  ['mp', 'С какими деньгами?'],
+  ['you', 'Которые я вложил в капитал.'],
+  ['mp', 'В какой капитал?'],
+  ['you', 'Прожиточного минимума.'],
+  ['mp', 'Какой?'],
+  ['you', 'В смысле в какой?'],
+  ['mp', 'Ты куда звонишь?! По какому номеру звонишь?'],
+  ['you', 'По твоему номеру.'],
+  ['mp', 'Ты, сынок!'],
+  ['you', 'Чё?!'],
+  ['mp', 'Сынок ёбаный!'],
+  ['you', 'Чё?'],
+  ['mp', 'Ты куда звонишь?!'],
+  ['you', 'Чё ты кричишь?'],
+  ['mp', 'По какому телефону звонишь?!'],
+  ['you', 'Двадцать два, пятьсот пять.'],
+  ['mp', 'Ну? Какой капитал? Пидор ты ёбаный!'],
+  ['you', 'Прожи... Прожиточного минимума!'],
+  ['mp', 'Ну, прожиточного.'],
+  ['you', 'Ну а чё ты кричишь?'],
+  ['mp', 'Да нихуя! А то соплю тебе разобью нахуй, сопляк ёбаный!'],
+  ['you', 'Ты чё?'],
+  ['mp', 'Ты понял, да?!'],
+  ['you', 'Я не понимаю куд...'],
+  ['mp', 'Всё затнись нахуй!'],
+  ['you', 'Алё.'],
+  ['mp', 'Пидорас ёбаный!'],
+  ['you', 'А чё я?'],
+  ['mp', 'Ты приедь сюда, я тебе бошку отверну!'],
+  ['you', 'А какой адрес?'],
+  ['mp', 'Вот приедь сюда, я тебе бошку отверну, сопляк ёбаный!'],
+  ['you', 'Да не надо.'],
+  ['mp', 'Ты понял, да?!'],
+  ['you', 'За что?'],
+  ['mp', 'За всё!'],
+  ['you', 'А чё я сделал?'],
+  ['mp', 'Сынок ёбаный!'],
+  ['you', 'Чё с деньгами?'],
+  ['mp', 'Ты понял меня?!'],
+  ['you', 'Чё с деньгами, я спрашиваю?'],
+  ['mp', 'Вот всё, какие то деньги, ёбаный пидорас.'],
+  ['you', 'Кто?'],
+  ['mp', 'Ты!'],
+  ['you', 'Почему?'],
+  ['mp', 'Всё, заткнись.'],
+  ['you', 'Алё. Алё.'],
+  ['mp', 'Я щас ещё узнаю с какого ты телефона звонишь!'],
+  ['you', 'Я звоню щас из офиса.'],
+  ['mp', 'С какого офиса?'],
+  ['you', 'Находящейся по улице Красноармейской, четыре.'],
+  ['mp', 'Вот, номер твой телефон скажи мне.'],
+  ['you', 'Алё.'],
+  ['mp', 'Скажи номер телефона своего.'],
+  ['you', 'Зачем?'],
+  ['mp', 'А чтобы я приехал тебе моську набил нахуй.'],
+  ['you', 'За что это?'],
+  ['mp', 'А за всё! Ты понял, да?'],
+  ['you', 'Ничё не понял.'],
+  ['mp', 'Я тебе сказал, сынок.'],
+  ['you', 'Что?'],
+  ['mp', 'Ты понял меня?'],
+  ['you', 'Папа!'],
+  ['mp', 'Всё.'],
+  ['you', 'Чё всё то?'],
+  ['mp', 'Ты давай номер телефона или сюда приезжай.'],
+  ['you', 'А с деньгами как вопрос обстоит?'],
+  ['mp', 'С какими деньгами?!'],
+  ['you', 'Которые я вложил.'],
+  ['mp', 'Куда ты вложил?!'],
+  ['you', 'В капитал.'],
+  ['mp', 'В какой?'],
+  ['you', 'Прожиточного минимума.'],
+  ['mp', 'Пидорас ёбаный!'],
+  ['you', 'Что?']
+];
+
+function renderMihalDialog() {
+  const cont = document.getElementById('mihal-dialog');
+  if (!cont) return;
+  const html = MIHAL_DIALOG.map(([who, text]) => {
+    const label = who === 'you' ? 'Михал Палыч' : 'Мужик';
+    return `<div class="mihal-line ${who}"><strong>${label}</strong>${text}</div>`;
+  }).join('');
+  cont.innerHTML = html;
+}
+
+// ====================================================================
+// ОТПРАВКА
+// ====================================================================
+const API_URL = 'https://d5d22jajv7q971321onm.wnq2w1o5.apigw.yandexcloud.net/api/submit';
+
+async function submitForm() {
+  const tx = ['improve', 'nps-improve-7-8', 'nps-improve-low', 'admin-bad-text', 'dont-change', 'notif-disturb-which', 'nps-improve-idiot'];
+  tx.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) answers[id] = el.value;
+  });
+
+  const contact = document.getElementById('contact-back');
+  if (contact && contact.value) answers.contact_back = contact.value;
+
+  document.querySelectorAll('[data-other-input]').forEach(wrap => {
+    if (!wrap.classList.contains('hidden')) {
+      const key = wrap.dataset.otherInput;
+      const inp = wrap.querySelector('input');
+      if (inp && inp.value) answers[key] = inp.value;
+    }
+  });
+
+  const payload = {
+    type: 'hard',
+    answers: answers,
+    params: params,
+    timestamp: new Date().toISOString()
+  };
+
+  const btn = document.getElementById('btn-screen-18');
+  if (btn) { btn.disabled = true; btn.textContent = 'Отправляем...'; }
+
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    next();
+  } catch (err) {
+    console.error('Submit error:', err);
+    alert('Не удалось отправить ответы. Проверь интернет и попробуй ещё раз.');
+    if (btn) { btn.disabled = false; btn.textContent = 'Еще чуть-чуть потерпи!'; }
+  }
+}
+
+init();
+</script>
+
+</body>
+</html>

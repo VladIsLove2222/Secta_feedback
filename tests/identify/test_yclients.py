@@ -1,12 +1,9 @@
 import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
-from app.yclients import search_client, get_visits, YClientsError
+from unittest.mock import AsyncMock, MagicMock, patch
+from yclients import search_client, get_visits, extract_tags, YClientsError
 
-
-# --- Фикстуры: типичные ответы API ---
 
 def make_response(status_code: int, json_data: dict):
-    """Создаёт мок HTTP-ответа."""
     mock = MagicMock()
     mock.status_code = status_code
     mock.json.return_value = json_data
@@ -27,9 +24,7 @@ CLIENT_FOUND_RESPONSE = {
     ]
 }
 
-CLIENT_NOT_FOUND_RESPONSE = {
-    "data": []
-}
+CLIENT_NOT_FOUND_RESPONSE = {"data": []}
 
 VISITS_RESPONSE = {
     "data": [
@@ -52,22 +47,21 @@ VISITS_RESPONSE = {
             "seance_length": 3600,
             "staff": {"id": 666, "name": "Дима"},
             "services": [{"title": "Мужская стрижка", "cost": 1500}],
-            "visit_attendance": 0,  # не пришёл — должен отфильтроваться
+            "visit_attendance": 0,  # не пришёл — фильтруется
         },
     ]
 }
 
 
-# --- Тесты search_client ---
+# --- search_client ---
 
 class TestSearchClient:
 
     @pytest.mark.asyncio
     async def test_client_found(self):
-        """Клиент найден — возвращает dict с данными."""
         mock_response = make_response(200, CLIENT_FOUND_RESPONSE)
 
-        with patch("app.yclients.httpx.AsyncClient") as MockClient:
+        with patch("yclients.httpx.AsyncClient") as MockClient:
             instance = AsyncMock()
             instance.post.return_value = mock_response
             instance.__aenter__ = AsyncMock(return_value=instance)
@@ -83,10 +77,9 @@ class TestSearchClient:
 
     @pytest.mark.asyncio
     async def test_client_not_found(self):
-        """Клиент не найден — возвращает None."""
         mock_response = make_response(200, CLIENT_NOT_FOUND_RESPONSE)
 
-        with patch("app.yclients.httpx.AsyncClient") as MockClient:
+        with patch("yclients.httpx.AsyncClient") as MockClient:
             instance = AsyncMock()
             instance.post.return_value = mock_response
             instance.__aenter__ = AsyncMock(return_value=instance)
@@ -99,10 +92,9 @@ class TestSearchClient:
 
     @pytest.mark.asyncio
     async def test_api_error_status(self):
-        """API вернул ошибку (не 200) — кидает YClientsError."""
         mock_response = make_response(500, {"error": "Internal Server Error"})
 
-        with patch("app.yclients.httpx.AsyncClient") as MockClient:
+        with patch("yclients.httpx.AsyncClient") as MockClient:
             instance = AsyncMock()
             instance.post.return_value = mock_response
             instance.__aenter__ = AsyncMock(return_value=instance)
@@ -113,16 +105,15 @@ class TestSearchClient:
                 await search_client("+79991234567")
 
 
-# --- Тесты get_visits ---
+# --- get_visits ---
 
 class TestGetVisits:
 
     @pytest.mark.asyncio
-    async def test_visits_returned(self):
-        """Визиты получены, неявившиеся отфильтрованы."""
+    async def test_visits_returned_and_filtered(self):
         mock_response = make_response(200, VISITS_RESPONSE)
 
-        with patch("app.yclients.httpx.AsyncClient") as MockClient:
+        with patch("yclients.httpx.AsyncClient") as MockClient:
             instance = AsyncMock()
             instance.get.return_value = mock_response
             instance.__aenter__ = AsyncMock(return_value=instance)
@@ -131,16 +122,14 @@ class TestGetVisits:
 
             result = await get_visits(12345678)
 
-        # Было 3 визита, но visit_attendance=0 отфильтрован
         assert len(result) == 2
         assert result[0]["staff"]["name"] == "Костя"
 
     @pytest.mark.asyncio
     async def test_empty_visits(self):
-        """У клиента нет визитов — пустой список."""
         mock_response = make_response(200, {"data": []})
 
-        with patch("app.yclients.httpx.AsyncClient") as MockClient:
+        with patch("yclients.httpx.AsyncClient") as MockClient:
             instance = AsyncMock()
             instance.get.return_value = mock_response
             instance.__aenter__ = AsyncMock(return_value=instance)
@@ -153,10 +142,9 @@ class TestGetVisits:
 
     @pytest.mark.asyncio
     async def test_api_error_status(self):
-        """API вернул ошибку — кидает YClientsError."""
         mock_response = make_response(403, {"error": "Forbidden"})
 
-        with patch("app.yclients.httpx.AsyncClient") as MockClient:
+        with patch("yclients.httpx.AsyncClient") as MockClient:
             instance = AsyncMock()
             instance.get.return_value = mock_response
             instance.__aenter__ = AsyncMock(return_value=instance)
@@ -165,3 +153,54 @@ class TestGetVisits:
 
             with pytest.raises(YClientsError):
                 await get_visits(12345678)
+
+
+# --- extract_tags ---
+
+class TestExtractTags:
+
+    def test_no_visits(self):
+        assert extract_tags([]) == []
+
+    def test_visits_without_client(self):
+        visits = [{"id": 1, "date": "2026-04-10"}]
+        assert extract_tags(visits) == []
+
+    def test_visits_with_empty_tags(self):
+        visits = [{"client": {"client_tags": []}}]
+        assert extract_tags(visits) == []
+
+    def test_single_tag(self):
+        visits = [{"client": {"client_tags": [{"id": 1, "title": "hardcore"}]}}]
+        assert extract_tags(visits) == ["hardcore"]
+
+    def test_multiple_tags(self):
+        visits = [{
+            "client": {
+                "client_tags": [
+                    {"id": 1, "title": "Сарафан"},
+                    {"id": 2, "title": "hardcore"},
+                    {"id": 3, "title": "Через 4 недели"},
+                ]
+            }
+        }]
+        assert extract_tags(visits) == ["Сарафан", "hardcore", "Через 4 недели"]
+
+    def test_tags_from_first_visit_with_them(self):
+        visits = [
+            {"client": {}},
+            {"client": {"client_tags": [{"id": 1, "title": "hardcore"}]}},
+        ]
+        assert extract_tags(visits) == ["hardcore"]
+
+    def test_tag_without_title_skipped(self):
+        visits = [{
+            "client": {
+                "client_tags": [
+                    {"id": 1, "title": "hardcore"},
+                    {"id": 2},
+                    {"id": 3, "title": ""},
+                ]
+            }
+        }]
+        assert extract_tags(visits) == ["hardcore"]

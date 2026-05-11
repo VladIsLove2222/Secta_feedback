@@ -1,4 +1,4 @@
-from app.classifier import classify
+from classifier import classify
 
 
 # --- not_found ---
@@ -12,7 +12,6 @@ class TestNotFound:
         assert classify(None, []) == "not_found"
 
     def test_none_with_tags(self):
-        # Даже если откуда-то пришли теги — клиент не найден
         assert classify(None, ["hardcore"]) == "not_found"
 
 
@@ -24,16 +23,11 @@ class TestHardTag:
         client = {"discount": 10, "visits_count": 60}
         assert classify(client, ["hardcore"]) == "hard"
 
-    def test_hard_overrides_regular(self):
-        client = {"discount": 5, "visits_count": 20}
-        assert classify(client, ["hardcore"]) == "hard"
-
     def test_hard_overrides_client(self):
         client = {"discount": 0, "visits_count": 3}
         assert classify(client, ["hardcore"]) == "hard"
 
     def test_hard_overrides_newbie(self):
-        # Друг с 0 визитов всё равно идёт на жёсткую форму
         client = {"discount": 0, "visits_count": 0}
         assert classify(client, ["hardcore"]) == "hard"
 
@@ -59,38 +53,33 @@ class TestNewbie:
         assert classify(client, None) == "newbie"
 
 
-# --- loyal (скидка 10%) ---
+# --- loyal (любая скидка > 0) ---
 
 class TestLoyal:
 
-    def test_loyal_no_tags(self):
+    def test_loyal_discount_10(self):
         client = {"discount": 10, "visits_count": 60}
+        assert classify(client, []) == "loyal"
+
+    def test_loyal_discount_5(self):
+        # скидка 5 теперь тоже loyal (нет типа regular)
+        client = {"discount": 5, "visits_count": 20}
+        assert classify(client, []) == "loyal"
+
+    def test_loyal_discount_1(self):
+        client = {"discount": 1, "visits_count": 3}
+        assert classify(client, []) == "loyal"
+
+    def test_loyal_discount_15(self):
+        client = {"discount": 15, "visits_count": 60}
         assert classify(client, []) == "loyal"
 
     def test_loyal_with_unrelated_tags(self):
         client = {"discount": 10, "visits_count": 60}
         assert classify(client, ["Сарафан"]) == "loyal"
 
-    def test_loyal_high_discount(self):
-        # Любая скидка >= 10% считается loyal
-        client = {"discount": 15, "visits_count": 60}
-        assert classify(client, []) == "loyal"
 
-
-# --- regular (скидка 5%) ---
-
-class TestRegular:
-
-    def test_regular_no_tags(self):
-        client = {"discount": 5, "visits_count": 20}
-        assert classify(client, []) == "regular"
-
-    def test_regular_with_unrelated_tags(self):
-        client = {"discount": 5, "visits_count": 20}
-        assert classify(client, ["Через 4 недели"]) == "regular"
-
-
-# --- client (найден, скидки нет, есть визиты) ---
+# --- client (найден, есть визиты, скидки нет) ---
 
 class TestClient:
 
@@ -103,7 +92,6 @@ class TestClient:
         assert classify(client, []) == "client"
 
     def test_client_many_visits_no_discount(self):
-        # Много визитов без скидки — всё равно client (брат скидку не дал)
         client = {"discount": 0, "visits_count": 50}
         assert classify(client, []) == "client"
 
@@ -113,13 +101,13 @@ class TestClient:
 class TestNoneSafety:
 
     def test_discount_none(self):
+        # discount=None → 0 → client
         client = {"discount": None, "visits_count": 5}
-        # discount=None → 0, visits=5 → client
         assert classify(client, []) == "client"
 
     def test_visits_none(self):
-        client = {"discount": 10, "visits_count": None}
         # visits=None → 0 → newbie (даже при скидке)
+        client = {"discount": 10, "visits_count": None}
         assert classify(client, []) == "newbie"
 
     def test_all_none(self):

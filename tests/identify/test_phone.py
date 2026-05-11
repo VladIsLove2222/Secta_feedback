@@ -1,11 +1,8 @@
 import pytest
-from app.phone import normalize, PhoneValidationError
+from phone import normalize, PhoneValidationError
 
-
-# --- Позитивные сценарии ---
 
 class TestNormalizeSuccess:
-    """Телефон в разных форматах → единый +7XXXXXXXXXX."""
 
     def test_already_normalized(self):
         assert normalize("+79991234567") == "+79991234567"
@@ -23,7 +20,6 @@ class TestNormalizeSuccess:
         assert normalize("79991234567") == "+79991234567"
 
     def test_without_country_code(self):
-        """10 цифр без кода страны — добавляем 7."""
         assert normalize("9991234567") == "+79991234567"
 
     def test_mixed_separators(self):
@@ -33,10 +29,7 @@ class TestNormalizeSuccess:
         assert normalize("8.999.123.45.67") == "+79991234567"
 
 
-# --- Негативные сценарии ---
-
 class TestNormalizeFailure:
-    """Невалидные номера → PhoneValidationError."""
 
     def test_too_short(self):
         with pytest.raises(PhoneValidationError):
@@ -55,6 +48,5 @@ class TestNormalizeFailure:
             normalize("abcdefghijk")
 
     def test_wrong_country_code(self):
-        """Начинается не с 7/8 — ошибка."""
         with pytest.raises(PhoneValidationError):
             normalize("+19991234567")

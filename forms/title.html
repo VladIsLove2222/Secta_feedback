@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SECTA</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+ 
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: #0a0a0a;
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+ 
+        .container { max-width: 480px; width: 100%; text-align: center; }
+        .logo-icon {
+            margin: 0 auto 12px;
+            width: 50px;
+            height: 56px;
+        }
+ 
+        .logo-block { margin-bottom: 32px; }
+        .logo-img { width: 280px; height: auto; }
+ 
+        .title { font-size: 20px; font-weight: 700; margin-bottom: 8px; line-height: 1.4; }
+        .subtitle { font-size: 16px; font-weight: 400; color: #888; margin-bottom: 40px; line-height: 1.6; }
+ 
+        #screen-select { display: block; }
+ 
+        .category-label {
+            font-size: 12px; font-weight: 600; color: #555;
+            text-transform: uppercase; letter-spacing: 3px; margin-bottom: 20px;
+        }
+ 
+        .btn-category {
+            display: block; width: 100%; padding: 18px 20px; margin-bottom: 12px;
+            background: #141414; border: 1px solid #222; border-radius: 8px;
+            color: #fff; font-family: 'Montserrat', sans-serif;
+            font-size: 15px; font-weight: 600; cursor: pointer;
+            transition: all 0.2s ease; text-align: center;
+        }
+        .btn-category:hover { background: #1c1c1c; border-color: #c71617; }
+        .btn-category:active { transform: scale(0.98); }
+        .btn-category .hint {
+            display: block; font-size: 13px; font-weight: 400; color: #555; margin-top: 4px;
+        }
+ 
+        #screen-phone { display: none; }
+        .phone-title { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+        .phone-subtitle { font-size: 13px; color: #888; margin-bottom: 28px; line-height: 1.5; }
+        .input-group { margin-bottom: 16px; }
+ 
+        .phone-input {
+            width: 100%; padding: 16px 20px; background: #141414;
+            border: 1px solid #222; border-radius: 8px; color: #fff;
+            font-family: 'Montserrat', sans-serif; font-size: 18px;
+            font-weight: 600; letter-spacing: 1px; outline: none;
+            transition: border-color 0.2s; text-align: center;
+        }
+        .phone-input:focus { border-color: #c71617; }
+        .phone-input::placeholder { color: #333; font-weight: 400; }
+ 
+        .consent-group {
+            display: flex; align-items: flex-start; gap: 10px;
+            margin-bottom: 24px; text-align: left;
+        }
+        .consent-group input[type="checkbox"] {
+            margin-top: 3px; accent-color: #c71617; min-width: 16px; min-height: 16px;
+        }
+        .consent-group label { font-size: 11px; color: #555; line-height: 2.6; }
+        .consent-group a { color: #777; text-decoration: underline; }
+ 
+        .btn-submit {
+            width: 100%; padding: 18px 20px; background: #c71617; border: none;
+            border-radius: 8px; color: #fff; font-family: 'Montserrat', sans-serif;
+            font-size: 15px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 2px; cursor: pointer; transition: all 0.2s; margin-bottom: 12px;
+        }
+        .btn-submit:hover { background: #c71617; }
+        .btn-submit:active { transform: scale(0.98); }
+        .btn-submit:disabled { background: #222; color: #555; cursor: not-allowed; }
+ 
+        .btn-anon {
+            display: block; width: 100%; padding: 18px 20px; margin-bottom: 12px;
+            background: #141414; border: 1px solid #222; border-radius: 8px;
+            color: #fff; font-family: 'Montserrat', sans-serif;
+            font-size: 15px; font-weight: 700; cursor: pointer;
+            transition: all 0.2s ease; text-align: center;
+        }
+        .btn-anon:hover { background: #1c1c1c; border-color: #c71617; }
+ 
+        .btn-back {
+            display: block; width: 100%; padding: 18px 20px; margin-bottom: 12px;
+            background: #141414; border: 1px solid #222; border-radius: 8px;
+            color: #fff; font-family: 'Montserrat', sans-serif;
+            font-size: 15px; font-weight: 700; cursor: pointer;
+            transition: all 0.2s ease; text-align: center;
+        }
+        .btn-back:hover { background: #1c1c1c; border-color: #c71617; }
+ 
+        #screen-loading { display: none; }
+        .spinner {
+            width: 40px; height: 40px; border: 3px solid #1a1a1a;
+            border-top-color: #c71617; border-radius: 50%;
+            animation: spin 0.8s linear infinite; margin: 0 auto 20px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loading-text { font-size: 14px; color: #666; }
+ 
+        .error-msg {
+            display: none; background: #1a0a0a; border: 1px solid #c71617;
+            border-radius: 8px; padding: 12px 16px; margin-bottom: 16px;
+            font-size: 13px; color: #c71617;
+        }
+ 
+        #screen-not-found { display: none; }
+        .not-found-title { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+        .not-found-subtitle {
+            font-size: 14px; color: #888; margin-bottom: 28px; line-height: 1.6;
+        }
+        .not-found-phone {
+            font-size: 16px; font-weight: 600; color: #c71617;
+            margin-bottom: 28px; letter-spacing: 1px;
+        }
+ 
+        @media (max-width: 400px) {
+            .logo-img { width: 220px; }
+            .title { font-size: 17px; }
+            .btn-category { padding: 14px 16px; font-size: 14px; }
+            .phone-input { font-size: 16px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+ 
+    <div class="logo-block">
+        <div class="logo-icon">
+            <img src="https://static.tildacdn.com/tild3037-3338-4066-a237-646139646537/logo.svg" alt="SECTA" width="50" height="56">
+        </div>
+        <img src="https://static.tildacdn.com/tild6661-3766-4366-a466-383862323139/logo_txt.svg" alt="SECTA" class="logo-img">
+    </div>
+ 
+    <div id="screen-select">
+        <div class="title">Мы подготовили кое-что интересное для тебя &mdash; небольшой интерактив.</div>
+        <div class="subtitle">
+            Расскажем факты о SECTA и узнаем твоё мнение.<br>
+            Две минуты.
+        </div>
+        <div class="category-label">Для начала узнаем кто ты?</div>
+        <button class="btn-category" onclick="goAnon('accompanying')">
+            Сопровождающий(ая)
+            <span class="hint">пришёл(ла) за компанию, не стригся(лась)</span>
+        </button>
+        <button class="btn-category" onclick="goAnon('newbie')">
+            Новичок
+            <span class="hint">первый раз у вас</span>
+        </button>
+        <button class="btn-category" onclick="showPhone()">
+            Клиент
+            <span class="hint">стригусь у вас</span>
+        </button>
+    </div>
+ 
+    <div id="screen-phone">
+        <div class="phone-title">Узнаем тебя</div>
+        <div class="phone-subtitle">
+            Введи номер &mdash; покажем интересные факты<br>
+            о твоей истории с SECTA
+        </div>
+        <div class="error-msg" id="error-msg"></div>
+        <div class="input-group">
+            <input type="tel" class="phone-input" id="phone-input"
+                placeholder="+7 (___) ___-__-__" maxlength="18" autocomplete="tel">
+        </div>
+        <div class="consent-group">
+            <input type="checkbox" id="consent-checkbox">
+            <label for="consent-checkbox">
+                Согласен на обработку <a href="https://sectabarbershop.ru/privacy" target="_blank">персональных данных</a>
+            </label>
+        </div>
+        <button class="btn-submit" id="btn-submit" onclick="submitPhone()" disabled>Продолжить</button>
+        <button class="btn-anon" onclick="goAnon('regular_anon')">Пройти анонимно</button>
+        <button class="btn-back" onclick="goBack()">&larr; Назад</button>
+    </div>
+ 
+    <div id="screen-loading">
+        <div class="spinner"></div>
+        <div class="loading-text">Ищем тебя в базе...</div>
+    </div>
+ 
+    <div id="screen-not-found">
+        <div class="not-found-title">Не нашли тебя в базе</div>
+        <div class="not-found-subtitle">
+            Возможно, в номере опечатка.<br>
+            Проверь и попробуй ещё раз или продолжи анонимно.
+        </div>
+        <div class="not-found-phone" id="not-found-phone"></div>
+        <button class="btn-submit" onclick="retryPhone()">Попробовать снова</button>
+        <button class="btn-anon" onclick="goAnon('regular_anon')">Продолжить анонимно</button>
+    </div>
+ 
+</div>
+ 
+<script>
+    const API_URL = 'https://d5d22jajv7q971321onm.wnq2w1o5.apigw.yandexcloud.net/api/identify';
+    const ANON_FORMS = {
+        accompanying:  'https://sectabarbershop.ru/accomp',
+        newbie:        'https://sectabarbershop.ru/newbie',
+        regular_anon:  'https://sectabarbershop.ru/regular_anon',
+    };
+ 
+    function hideAllScreens() {
+        document.getElementById('screen-select').style.display = 'none';
+        document.getElementById('screen-phone').style.display = 'none';
+        document.getElementById('screen-loading').style.display = 'none';
+        document.getElementById('screen-not-found').style.display = 'none';
+    }
+ 
+    function showPhone() {
+        hideAllScreens();
+        document.getElementById('screen-phone').style.display = 'block';
+        document.getElementById('phone-input').focus();
+    }
+ 
+    function goBack() {
+        hideAllScreens();
+        document.getElementById('screen-select').style.display = 'block';
+        document.getElementById('error-msg').style.display = 'none';
+    }
+ 
+    function goAnon(type) {
+        const url = ANON_FORMS[type];
+        if (url) window.location.href = url;
+    }
+ 
+    function showNotFound(phone) {
+        hideAllScreens();
+        document.getElementById('not-found-phone').textContent = phone;
+        document.getElementById('screen-not-found').style.display = 'block';
+    }
+ 
+    function retryPhone() {
+        // Возвращаем на экран ввода с очищенным полем —
+        // чтобы клиент явно вводил заново, а не правил старый
+        hideAllScreens();
+        document.getElementById('phone-input').value = '';
+        document.getElementById('consent-checkbox').checked = false;
+        updateSubmitState();
+        document.getElementById('error-msg').style.display = 'none';
+        document.getElementById('screen-phone').style.display = 'block';
+        document.getElementById('phone-input').focus();
+    }
+ 
+    async function submitPhone() {
+        const phone = document.getElementById('phone-input').value;
+        const errorEl = document.getElementById('error-msg');
+        errorEl.style.display = 'none';
+        hideAllScreens();
+        document.getElementById('screen-loading').style.display = 'block';
+        try {
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ phone: phone }),
+            });
+            const data = await response.json();
+ 
+            if (!response.ok) {
+                showError(data.detail || 'Что-то пошло не так. Попробуй ещё раз.');
+                return;
+            }
+ 
+            // Клиент не найден в базе → отдельный экран с выбором
+            if (data.status === 'not_found') {
+                showNotFound(phone);
+                return;
+            }
+ 
+            // Ок (loyal/regular/client/hard/newbie) или error (yclients недоступен)
+            // → редирект на форму, которую вернул бэк
+            if (data.redirect_url) {
+                window.location.href = data.redirect_url;
+            } else {
+                showError('Не удалось обработать запрос. Попробуй ещё раз.');
+            }
+        } catch (err) {
+            console.error('API error:', err);
+            // Сеть недоступна/таймаут — отправляем на анонимку, как и раньше.
+            // Это НЕ опечатка клиента, а наша проблема, отдельный экран не нужен.
+            goAnon('regular_anon');
+        }
+    }
+ 
+    function showError(msg) {
+        hideAllScreens();
+        document.getElementById('screen-phone').style.display = 'block';
+        const errorEl = document.getElementById('error-msg');
+        errorEl.textContent = msg;
+        errorEl.style.display = 'block';
+    }
+ 
+    // --- Маска телефона ---
+    // Форматирует ввод в формат +7 (XXX) XXX-XX-XX по мере набора.
+    // Принимает любое начало (8, 7, +7, или просто цифры) — нормализует к +7.
+    function formatPhone(value) {
+        // Берём только цифры
+        let digits = value.replace(/\D/g, '');
+ 
+        // Если начинается с 8 — заменяем на 7
+        if (digits.startsWith('8')) digits = '7' + digits.slice(1);
+        // Если не начинается с 7 и есть цифры — добавляем 7 в начало
+        if (digits.length > 0 && !digits.startsWith('7')) digits = '7' + digits;
+ 
+        // Обрезаем до 11 цифр (1 код страны + 10 номера)
+        digits = digits.slice(0, 11);
+ 
+        // Собираем по шаблону +7 (XXX) XXX-XX-XX
+        if (digits.length === 0) return '';
+        if (digits.length <= 1) return '+7';
+        if (digits.length <= 4) return `+7 (${digits.slice(1)}`;
+        if (digits.length <= 7) return `+7 (${digits.slice(1, 4)}) ${digits.slice(4)}`;
+        if (digits.length <= 9) return `+7 (${digits.slice(1, 4)}) ${digits.slice(4, 7)}-${digits.slice(7)}`;
+        return `+7 (${digits.slice(1, 4)}) ${digits.slice(4, 7)}-${digits.slice(7, 9)}-${digits.slice(9, 11)}`;
+    }
+ 
+    const phoneInput = document.getElementById('phone-input');
+    const consentCheckbox = document.getElementById('consent-checkbox');
+    const submitBtn = document.getElementById('btn-submit');
+ 
+    phoneInput.addEventListener('input', function(e) {
+        e.target.value = formatPhone(e.target.value);
+        updateSubmitState();
+    });
+ 
+    function updateSubmitState() {
+        const hasPhone = phoneInput.value.replace(/\D/g, '').length === 11;
+        const hasConsent = consentCheckbox.checked;
+        submitBtn.disabled = !(hasPhone && hasConsent);
+    }
+ 
+    consentCheckbox.addEventListener('change', updateSubmitState);
+    phoneInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !submitBtn.disabled) submitPhone();
+    });
+</script>
+</body>
+</html>
+ 

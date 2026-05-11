@@ -1,10 +1,8 @@
 import pytest
 from datetime import datetime
 from unittest.mock import patch
-from app.facts import calculate, _format_years, _pluralize_years, _pluralize_months
+from facts import calculate, _format_years, _pluralize_years, _pluralize_months
 
-
-# --- Фикстуры ---
 
 SAMPLE_CLIENT = {
     "name": "Иван Петров",
@@ -19,19 +17,19 @@ SAMPLE_VISITS = [
         "date": "2026-04-10 14:00:00",
         "seance_length": 3600,
         "staff": {"id": 555, "name": "Костя"},
-        "services": [{"first_cost": 2100, "cost_to_pay": 1890}],  # экономия 210
+        "services": [{"first_cost": 2100, "cost_to_pay": 1890}],
     },
     {
         "date": "2026-03-10 14:00:00",
         "seance_length": 2700,
         "staff": {"id": 555, "name": "Костя"},
-        "services": [{"first_cost": 2100, "cost_to_pay": 1890}],  # экономия 210
+        "services": [{"first_cost": 2100, "cost_to_pay": 1890}],
     },
     {
         "date": "2026-02-10 14:00:00",
         "seance_length": 1800,
         "staff": {"id": 666, "name": "Дима"},
-        "services": [{"first_cost": 2100, "cost_to_pay": 1890}],  # экономия 210
+        "services": [{"first_cost": 2100, "cost_to_pay": 1890}],
     },
 ]
 
@@ -41,18 +39,16 @@ SAMPLE_VISITS = [
 class TestCalculate:
 
     def test_full_calculation(self):
-        """Полный расчёт с реальными данными."""
         result = calculate(SAMPLE_CLIENT, SAMPLE_VISITS)
 
         assert result["name"] == "Иван"
         assert result["master"] == "Костя"
         assert result["visits"] == 24
-        assert result["money_saved"] == 630  # 3 визита × (2100 - 1890) = 630
-        assert result["hours"] == 2.2  # (3600 + 2700 + 1800) / 3600
-        assert result["hair_kg"] == 1.2  # 24 * 0.05
+        assert result["money_saved"] == 630
+        assert result["hours"] == 2.2
+        assert result["hair_kg"] == 1.2
 
     def test_empty_data(self):
-        """Пустые данные — не падает, возвращает дефолты."""
         result = calculate({}, [])
 
         assert result["name"] == "друг"
@@ -63,7 +59,6 @@ class TestCalculate:
         assert result["hair_kg"] == 0
 
     def test_none_values(self):
-        """None в полях — не падает."""
         client = {
             "name": None,
             "visits_count": None,
@@ -125,7 +120,7 @@ class TestGetMaster:
 
 class TestFormatYears:
 
-    @patch("app.facts.datetime")
+    @patch("facts.datetime")
     def test_two_years_three_months(self, mock_dt):
         mock_dt.now.return_value = datetime(2026, 4, 20)
         mock_dt.fromisoformat = datetime.fromisoformat
@@ -133,7 +128,7 @@ class TestFormatYears:
         result = _format_years({"first_visit_date": "2024-01-20"})
         assert result == "2 года 3 месяца"
 
-    @patch("app.facts.datetime")
+    @patch("facts.datetime")
     def test_exactly_one_year(self, mock_dt):
         mock_dt.now.return_value = datetime(2026, 4, 20)
         mock_dt.fromisoformat = datetime.fromisoformat
@@ -141,7 +136,7 @@ class TestFormatYears:
         result = _format_years({"first_visit_date": "2025-04-20"})
         assert result == "1 год"
 
-    @patch("app.facts.datetime")
+    @patch("facts.datetime")
     def test_five_months(self, mock_dt):
         mock_dt.now.return_value = datetime(2026, 4, 20)
         mock_dt.fromisoformat = datetime.fromisoformat
@@ -154,6 +149,19 @@ class TestFormatYears:
 
     def test_invalid_date(self):
         assert _format_years({"first_visit_date": "мусор"}) == "давно"
+
+    @patch("facts.datetime")
+    def test_fallback_to_oldest_visit(self, mock_dt):
+        # Если first_visit_date нет в client_data — берём из visits
+        mock_dt.now.return_value = datetime(2026, 4, 20)
+        mock_dt.fromisoformat = datetime.fromisoformat
+        mock_dt.strptime = datetime.strptime
+        visits = [
+            {"date": "2026-03-10 10:00:00"},
+            {"date": "2025-01-20 10:00:00"},  # самый старый
+        ]
+        result = _format_years({}, visits)
+        assert result == "1 год 3 месяца"
 
 
 # --- Склонение ---
@@ -186,7 +194,7 @@ class TestMoneySaved:
     def test_with_discount(self):
         visits = [{"services": [{"first_cost": 2000, "cost_to_pay": 1800}]}]
         result = calculate({"visits_count": 10, "discount": 10}, visits)
-        assert result["money_saved"] == 200  # 2000 - 1800
+        assert result["money_saved"] == 200
 
     def test_zero_discount(self):
         result = calculate({"visits_count": 10, "discount": 0}, [])
@@ -203,8 +211,8 @@ class TestHours:
 
     def test_calculation(self):
         visits = [
-            {"seance_length": 3600},  # 1 час
-            {"seance_length": 1800},  # 0.5 часа
+            {"seance_length": 3600},
+            {"seance_length": 1800},
         ]
         result = calculate({}, visits)
         assert result["hours"] == 1.5
@@ -226,7 +234,7 @@ class TestHair:
 
     def test_calculation(self):
         result = calculate({"visits_count": 20}, [])
-        assert result["hair_kg"] == 1.0  # 20 * 0.05
+        assert result["hair_kg"] == 1.0
 
     def test_zero_visits(self):
         result = calculate({"visits_count": 0}, [])

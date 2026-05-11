@@ -15,3 +15,9 @@ venv/
 .idea/
 .vscode/
 *.swp
+
+# OS
+.DS_Store
+
+# Build artifacts
+functions/*.zip
