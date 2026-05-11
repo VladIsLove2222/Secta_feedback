@@ -97,6 +97,7 @@ DECLARE $nps_improve_idiot AS Utf8?;
 DECLARE $admin_bad_text AS Utf8?;
 DECLARE $dont_change AS Utf8?;
 DECLARE $contact_back AS Utf8?;
+DECLARE $notif_convenient_why AS Utf8?;
 
 UPSERT INTO responses (
     id, form_type, created_at,
@@ -106,7 +107,7 @@ UPSERT INTO responses (
     master_work, master_human, admin_rating,
     agree, waited, warned,
     merch_want, merch_buy,
-    notif_convenient, notif_disturb, notif_disturb_which, notif_useful,
+    notif_convenient, notif_disturb, notif_disturb_which, notif_useful, notif_convenient_why,
     who_waiting, how_found, plan_return, service_done,
     master_bad_reasons, master_human_bad, money, new_services,
     m_cleanness, m_music, m_smell, m_comfort, m_coffee,
@@ -120,7 +121,7 @@ UPSERT INTO responses (
     $master_work, $master_human, $admin_rating,
     $agree, $waited, $warned,
     $merch_want, $merch_buy,
-    $notif_convenient, $notif_disturb, $notif_disturb_which, $notif_useful,
+    $notif_convenient, $notif_disturb, $notif_disturb_which, $notif_useful, $notif_convenient_why,
     $who_waiting, $how_found, $plan_return, $service_done,
     $master_bad_reasons, $master_human_bad, $money, $new_services,
     $m_cleanness, $m_music, $m_smell, $m_comfort, $m_coffee,
@@ -205,6 +206,7 @@ def _parse_payload(body: dict) -> dict:
         "$merch_want": _to_str(answers.get("merch_want")),
         "$merch_buy": _to_str(answers.get("merch_buy")),
         "$notif_convenient": _to_str(answers.get("notif_convenient")),
+        "$notif_convenient_why": _to_str(answers.get("notif_convenient_why")),
         "$notif_disturb": _to_str(answers.get("notif_disturb")),
         "$notif_disturb_which": _to_str(answers.get("notif-disturb-which")),
         "$notif_useful": _to_str(answers.get("notif_useful")),
